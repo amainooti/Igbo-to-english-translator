@@ -1,0 +1,22 @@
+{% extends 'main.html' %}
+
+
+{% block content %}
+<h1>Igbo to English Translation</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="input_text">Input Igbo Text:</label>
+    <input type="text" name="input_text" required>
+    <button type="submit">Translate</button>
+</form>
+
+{% if input_text %}
+<p><strong>Input Text:</strong> {{ input_text }}</p>
+{% endif %}
+
+{% if translated_text %}
+<p><strong>Translated Text:</strong> {{ translated_text }}</p>
+{% endif %}
+
+{% endblock content %}
