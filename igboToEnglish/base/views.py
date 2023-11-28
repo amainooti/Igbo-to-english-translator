@@ -1,24 +1,64 @@
 from django.shortcuts import render
-from transformers import MarianMTModel, MarianTokenizer
+import pyaudio
+from google.cloud import speech_v1p1beta1 as speech
+from google.cloud.speech_v1p1beta1.types import RecognitionConfig
+from .translate import translate_to_igbo
 
 def home(request):
     if request.method == 'POST':
-        input_text = request.POST.get('input_text', '')
+        # Initialize PyAudio
+        p = pyaudio.PyAudio()
 
-        # Load the pre-trained model and tokenizer
-        model_name = 'Helsinki-NLP/opus-mt-ig-en'
-        model = MarianMTModel.from_pretrained(model_name)
-        tokenizer = MarianTokenizer.from_pretrained(model_name)
+        # Set the audio format and other parameters based on your requirements
+        format = pyaudio.paInt16
+        channels = 1
+        rate = 16000
+        chunk = 1024
 
-        # Tokenize the input text
-        input_ids = tokenizer.encode(input_text, return_tensors='pt')
+        stream = p.open(format=format,
+                        channels=channels,
+                        rate=rate,
+                        input=True,
+                        frames_per_buffer=chunk)
 
-        # Generate translation
-        translation_ids = model.generate(input_ids)
+        print("Listening...")
 
-        # Decode the translated text
-        translated_text = tokenizer.decode(translation_ids[0], skip_special_tokens=True)
+        frames = []
+        for i in range(0, int(rate / chunk * 5)):  # Adjust the time based on your needs
+            data = stream.read(chunk)
+            frames.append(data)
 
-        return render(request, 'base/home.html', {'input_text': input_text, 'translated_text': translated_text})
+        print("Stopped listening.")
+
+        # Stop and close the stream
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        # Convert the audio frames to bytes
+        audio_content = b''.join(frames)
+
+        # Perform Speech-to-Text
+        client = speech.SpeechClient()
+        audio = speech.RecognitionAudio(content=audio_content)
+        config = speech.RecognitionConfig(
+            encoding=RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=rate,
+            language_code="en-US",
+        )
+
+        # Perform the Speech-to-Text API call
+        response = client.recognize(config=config, audio=audio)
+
+        # Extract English text from the response
+        english_text = response.results[0].alternatives[0].transcript
+        print(response.results)
+        print(response.results[0].alternatives)
+        print(response.results[0].alternatives[0].transcript)
+
+        # Perform English to Igbo translation
+        igbo_text = translate_to_igbo(english_text)
+
+        return render(request, 'base/home.html', {'english_text': english_text, 'igbo_text': igbo_text})
 
     return render(request, 'base/home.html')

@@ -1,22 +1,91 @@
 {% extends 'main.html' %}
-
+{% load static %}
 
 {% block content %}
-<h1>Igbo to English Translation</h1>
+<div class="form-container">
+    <form method="post" enctype="multipart/form-data" id="translation-form">
+        <div class="form-container__wrapper">
+            <h2 style="color: #007BFF;">English to Igbo Translator</h2>
+            {% csrf_token %}
+            <div class="input-container">
+                <img src="{% static 'base/images/microphone-black-shape.png' %}" alt="Microphone"
+                    style="width: 20px; height: 20px; margin-right: 5px;">
+                <label for="audio_file" style="margin-right: 10px;">Speak Now:</label>
+                <button type="button" id="micButton">
+                    Start Listening
+                </button>
+            </div>
+            <span id="listeningStatus" style="display:none;">Listening...</span>
+        </div>
+    </form>
+</div>
 
-<form method="post">
-    {% csrf_token %}
-    <label for="input_text">Input Igbo Text:</label>
-    <input type="text" name="input_text" required>
-    <button type="submit">Translate</button>
-</form>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var micButton = document.getElementById("micButton");
+        var listeningStatus = document.getElementById("listeningStatus");
+        var translationForm = document.getElementById("translation-form");
 
-{% if input_text %}
-<p><strong>Input Text:</strong> {{ input_text }}</p>
-{% endif %}
+        micButton.addEventListener("click", function () {
+            listeningStatus.style.display = "inline";  // Show "Listening..." text
+            micButton.disabled = true;  // Disable the button while listening
 
-{% if translated_text %}
-<p><strong>Translated Text:</strong> {{ translated_text }}</p>
-{% endif %}
+            // Simulate a delay (adjust as needed) for demonstration purposes
+            setTimeout(function () {
+                // After the simulated recognition time, enable the button and hide "Listening..." text
+                micButton.disabled = false;
+                listeningStatus.style.display = "none";
+                // Trigger the form submission programmatically
+                translationForm.submit();
+            }, 5000);  // Adjust the time based on your recognition needs
+        });
+    });
+</script>
+
+<style>
+    .form-container {
+        padding: 20px;
+        background-color: #f9f9f9;
+        text-align: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        /* Light background color */
+    }
+
+    .input-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .form-container__wrapper {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        border: 1px solid #f9f9f9;
+        padding: 30px;
+        border-radius: 8px;
+    }
+
+    label {
+        font-size: 16px;
+    }
+
+    #micButton {
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        text-align: center;
+    }
+
+    h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+</style>
 
 {% endblock content %}
